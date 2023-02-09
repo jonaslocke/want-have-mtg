@@ -45,6 +45,43 @@ export interface RelatedUris {
   edhrec: string;
 }
 
+export type CardExtras =
+  | "Foil"
+  | "Foil Etched"
+  | "Altered"
+  | "Signed"
+  | "Buy A Box"
+  | "DCI"
+  | "FNM"
+  | "Oversize"
+  | "Pre Release"
+  | "Promo"
+  | "Textless"
+  | "Misprint"
+  | "Miscut";
+
+export type CardLanguage =
+  | "German"
+  | "Traditional Chinese"
+  | "Simplified Chinese"
+  | "Spanish"
+  | "French"
+  | "English"
+  | "Italian"
+  | "Japonese"
+  | "Korean"
+  | "Portuguese"
+  | "Russian"
+  | "Phyrexian";
+
+export type CardQuality =
+  | "(M) Mint"
+  | "(NM) Near Mint"
+  | "(SP) Slightly Played"
+  | "(MP) Moderately Played"
+  | "(HP) Heavily Played"
+  | "(D) Damaged";
+
 export interface Card {
   object: string;
   id: string;
@@ -109,4 +146,32 @@ export interface Card {
   penny_rank: number;
   prices: Prices;
   related_uris: RelatedUris;
+}
+
+export interface CardInList {
+  id?: string;
+  name: string;
+  quantity: number;
+  language: CardLanguage;
+  quality: CardQuality;
+  extras: CardExtras;
+  set: CardSet;
+}
+
+export interface CardSet {
+  object: string;
+  id: string;
+  code: string;
+  name: string;
+  uri: string;
+  scryfall_uri: string;
+  search_uri: string;
+  released_at: string;
+  set_type: string;
+  card_count: number;
+  parent_set_code: string;
+  digital: boolean;
+  nonfoil_only: boolean;
+  foil_only: boolean;
+  icon_svg_uri: string;
 }

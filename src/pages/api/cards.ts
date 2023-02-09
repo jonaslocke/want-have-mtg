@@ -9,6 +9,41 @@ const isMocked = false;
 const warnConnection = (endPoint: string) =>
   console.warn(`/api/${endPoint} => Connected successfully to server`);
 
+export const getCardByName = async (
+  name: string,
+  like: "true" | "false",
+  res: NextApiResponse<Data>,
+  collection: any
+) => {
+  warnConnection("cards/handleGetByName");
+  if (!name) return res.status(400).json({ message: "BAD REQUEST" });
+
+  const isLike = like === "true";
+
+  let cards: Card[] = [];
+
+  if (isLike) {
+    await collection
+      .find({ name: { $regex: new RegExp(name, "i") } })
+      .limit(50)
+      .forEach((card: Card) => cards.push(card));
+
+    cards = cards.reduce((acc: Card[], cur: Card, index: number) => {
+      const alreadyAdded = acc.map(({ name }) => name).includes(cur.name);
+      if (!alreadyAdded) {
+        acc.push(cur);
+      }
+      return acc;
+    }, [] as Card[]);
+
+    cards = cards.slice(0, 10);
+  } else {
+    await collection.find({ name }).forEach((card: Card) => cards.push(card));
+  }
+
+  return cards;
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
@@ -27,7 +62,7 @@ export default async function handler(
     collection = db.collection("cards");
   }
 
-  const { method, body, query } = req;
+  const { method, query } = req;
 
   const handleGet = async () => {
     warnConnection("cards/handleGet");
@@ -40,31 +75,12 @@ export default async function handler(
 
     return res.status(200).json(cards);
   };
-  const handleGetByName = async (name: string) => {
-    warnConnection("cards/handleGetByName");
-    let cards: Card[] = [];
+  const handleGetByName = async (name: string, like: "true" | "false") => {
+    const cards = await getCardByName(name, like, res, collection);
 
-    await collection
-      .find({ name: { $regex: new RegExp(name, "i") } })
-      .limit(100)
-      .forEach((card: Card) => cards.push(card));
-
-    cards = cards.reduce((acc: Card[], cur: Card, index: number) => {
-      if (index === 0) {
-        acc.push(cur);
-      } else {
-        const alreadyAdded = acc.map(({ name }) => name).includes(cur.name);
-        console.log({ alreadyAdded });
-
-        if (!alreadyAdded) {
-          acc.push(cur);
-        }
-      }
-      return acc;
-    }, [] as Card[]);
-
-    return res.status(200).json({ cards: cards.slice(0, 10) });
+    return res.status(200).json({ cards });
   };
+
   const handleGetOne = async (id: string) => {
     warnConnection("cards/handleGetOne");
     if (!id) return res.status(400).json({ message: "BAD REQUEST" });
@@ -77,7 +93,7 @@ export default async function handler(
   switch (method) {
     case "GET":
       return query.name
-        ? handleGetByName(query.name as string)
+        ? handleGetByName(query.name as string, query.like as "true" | "false")
         : query.id
         ? handleGetOne(query.id as string)
         : handleGet();
